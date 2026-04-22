@@ -1,4 +1,4 @@
-# moviles-react-notificationes
+# Notificaciones App (Expo)
 
 1. Crear un nuevo proyecto
 ```
@@ -131,11 +131,6 @@ UI:
 
 ---
 
-Ejercicio:
-Conectar el código de Notificación con el de AsyncStorage para enviar una notificación al usuario con el valor del contador
-
----
-
-Nota: 
-Si tienes problemas durante el ejercicio, utiliza el agente de Copilot habilitado en el repositorio de esta asignación, agrega un archivo PROMPT.md con el historial que se genera (copy paste)
+Ejercicio sugerido:
+Conectar el código de Notificación con el de AsyncStorage para enviar una notificación al usuario con el valor del contador.
 

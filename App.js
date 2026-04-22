@@ -1,7 +1,9 @@
-import { View, Text, Button } from 'react-native';
 import { useState, useEffect } from 'react';
+import { View, Text, Button } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const STORAGE_COUNTER_KEY = 'contador';
 
 Notifications.setNotificationHandler({
     handleNotification: async () => ({
@@ -12,55 +14,56 @@ Notifications.setNotificationHandler({
 });
 
 export default function App() {
-    const pedirPermiso = async () => {
+    const [currentCount, setCurrentCount] = useState(0);
+    const [isStorageReady, setIsStorageReady] = useState(false);
+
+    const requestNotificationPermission = async () => {
         await Notifications.requestPermissionsAsync();
     };
 
-    const enviarNotificacion = async (contador) => {
+    const saveCount = async (value) => {
+        try {
+            await AsyncStorage.setItem(STORAGE_COUNTER_KEY, JSON.stringify(value));
+        } catch (error) {
+            console.log('Error guardando');
+        }
+    };
+
+    const sendNotificationWithCount = async (countValue) => {
         await Notifications.scheduleNotificationAsync({
             content: {
-                title: "Hola, mundo 🌍",
-                body: `El contador actual es: ${contador}`,
+                title: 'Hola, mundo 🌍',
+                body: `El contador actual es: ${countValue}`,
             },
             trigger: null, // Este trigger lo puedes modificar para darle unos segundos de delay, ejemplo: trigger{ seconds: 5 }
         });
     };
 
-    const [contador, setContador] = useState(0);
-    const [cargado, setCargado] = useState(false);
-
-    useEffect(() => {
-        if (cargado) {
-            guardarContador(contador);
-        }
-    }, [contador, cargado]);
-
-    const incrementar = () => {
-        setContador(contador + 1);
-    };
-
-    const guardarContador = async (valor) => {
-        try {
-            await AsyncStorage.setItem("contador", JSON.stringify(valor));
-        } catch (e) {
-            console.log("Error guardando");
-        }
+    const increaseCounter = () => {
+        setCurrentCount((previousValue) => previousValue + 1);
     };
 
     useEffect(() => {
-        const cargarContador = async () => {
+        if (!isStorageReady) {
+            return;
+        }
+        saveCount(currentCount);
+    }, [currentCount, isStorageReady]);
+
+    useEffect(() => {
+        const loadSavedCount = async () => {
             try {
-                const data = await AsyncStorage.getItem("contador");
-                if (data !== null) {
-                    setContador(JSON.parse(data));
+                const storedValue = await AsyncStorage.getItem(STORAGE_COUNTER_KEY);
+                if (storedValue !== null) {
+                    setCurrentCount(JSON.parse(storedValue));
                 }
-            } catch (e) {
-                console.log("Error cargando");
+            } catch (error) {
+                console.log('Error cargando');
             } finally {
-                setCargado(true);
+                setIsStorageReady(true);
             }
         };
-        cargarContador();
+        loadSavedCount();
     }, []);
 
     return (
@@ -68,12 +71,12 @@ export default function App() {
             <Text style={{ alignSelf: 'center', fontSize: 20, fontWeight: 'bold' }}>
                 Notificaciones
             </Text>
-            <Button title="Pedir permiso" onPress={pedirPermiso}/>
-            <Button title="Enviar notificación" onPress={() => enviarNotificacion(contador)}/>
+            <Button title="Pedir permiso" onPress={requestNotificationPermission}/>
+            <Button title="Enviar notificación" onPress={() => sendNotificationWithCount(currentCount)}/>
             <Text style={{ alignSelf: 'center', fontSize: 20, fontWeight: 'bold' }}>
-                Contador: {contador}
+                Contador: {currentCount}
             </Text>
-            <Button title="Incrementar" onPress={incrementar}/>
+            <Button title="Incrementar" onPress={increaseCounter}/>
         </View>
     );
 }
